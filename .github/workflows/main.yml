@@ -1,0 +1,60 @@
+name: Terraform
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+    - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-preprod:
+    name: Terraform Preprod
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: environments/preprod
+
+    steps:
+    # Azure login
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # 1. Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Install Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      # 3. Check Terraform version
+      - name: Terraform Version
+        run: terraform version
+
+      # 4. Terraform Format Check
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      # 5. Terraform Init
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      # 6. Terraform Validate
+      - name: Terraform Validate
+        run: terraform validate
+
+      # 7. Terraform Plan, GitHub Actions should execute the Terraform plan command without asking for interactive input.
+      - name: Terraform Plan
+        run: terraform plan -input=false
