@@ -4,37 +4,39 @@ on:
   push:
     branches:
       - "**"
+
   pull_request:
     branches:
-    - main
+      - main
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-   env:
+  terraform-preprod:
+    name: Terraform Preprod
+    runs-on: ubuntu-latest
+
+    env:
       ARM_USE_OIDC: true
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      
-  terraform-preprod:
-    name: Terraform Preprod
-    runs-on: ubuntu-latest
- 
+
     defaults:
       run:
         working-directory: Env/Dev
 
     steps:
-    # Azure login
+      # Azure login
       - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       # 1. Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -61,6 +63,6 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      # 7. Terraform Plan, GitHub Actions should execute the Terraform plan command without asking for interactive input.
+      # 7. Terraform Plan
       - name: Terraform Plan
         run: terraform plan -input=false
